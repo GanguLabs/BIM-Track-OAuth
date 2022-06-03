@@ -183,6 +183,8 @@ namespace BIM_Track_OAuth
 
         async void getHubs_HttpWebRequest(string tokenRequestURI, string accessToken)
         {
+            // This used inbuilt System.Web.httpWebRequest library to send API Calls. Below is anothe function that uses RestSharp with is supported by PostMan
+
             HttpWebRequest tokenRequest = (HttpWebRequest)WebRequest.Create(tokenRequestURI);
             tokenRequest.Method = "GET";
             tokenRequest.Accept = "Accept=application/json,text/json,application/xml,text/xml";
@@ -192,13 +194,9 @@ namespace BIM_Track_OAuth
             {
                 // reads response body
                 string responseText = await reader.ReadToEndAsync();
-                //output(responseText);
-                byte[] encodedResponseText = Encoding.Convert(Encoding.Default, Encoding.UTF8, Encoding.Default.GetBytes(responseText));
-                string ecode = Encoding.UTF8.GetString(encodedResponseText);
-
 
                 // convert JSON Response to List of Hubs
-                List<BT_Hub> responseDecoded = JsonConvert.DeserializeObject<List<BT_Hub>>(ecode);
+                List<BT_Hub> responseDecoded = JsonConvert.DeserializeObject<List<BT_Hub>>(responseText);
 
                 output(responseDecoded[0].Name);
 
@@ -206,6 +204,21 @@ namespace BIM_Track_OAuth
 
 
         }
+
+        //async void getHubs_RestClient(string tokenRequestURI, string accessToken)
+        //{
+        //    // this is a RestSharp implementation of the function - PostMan supports RestSharp for code snippet export
+        //    var client = new RestClient(tokenRequestURI);
+        //    client.Timeout = -1;
+        //    var request = new RestRequest(Method.GET);
+        //    request.AddHeader("Accept", "application/json, text/json, application/xml, text/xml");
+        //    request.AddHeader("Authorization", "Bearer " + accessToken);
+        //    IRestResponse response = client.Execute(request);
+        //    Console.WriteLine(response.Content);
+
+        //    string responseText = response.Content;
+        //    List<BT_Hub> responseDecoded = JsonConvert.DeserializeObject<List<BT_Hub>>(responseText);
+        //}
 
 
         /// <summary>
