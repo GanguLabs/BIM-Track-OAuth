@@ -18,10 +18,10 @@ namespace BIM_Track_OAuth
     {
 
         // client configuration
-        const string clientID = "581786658708-elflankerquo1a6vsckabbhn25hclla0.apps.googleusercontent.com";
-        const string clientSecret = "3f6NggMbPtrmIBpgx-MK2xXK";
-        const string authorizationEndpoint = "https://accounts.google.com/o/oauth2/v2/auth";
-        const string tokenEndpoint = "https://www.googleapis.com/oauth2/v4/token";
+        const string clientID = "<Client_ID>";
+        const string clientSecret = "<Client_Secret>";
+        const string authorizationEndpoint = "https://auth.bimtrackapp.co/connect/authorize";
+        const string tokenEndpoint = "https://auth.bimtrackapp.co/connect/token";
         const string userInfoEndpoint = "https://www.googleapis.com/oauth2/v3/userinfo";
 
         public MainWindow()
@@ -48,19 +48,20 @@ namespace BIM_Track_OAuth
             const string code_challenge_method = "S256";
 
             // Creates a redirect URI using an available port on the loopback address.
-            string redirectURI = string.Format("http://{0}:{1}/", IPAddress.Loopback, GetRandomUnusedPort());
-            output("redirect URI: " + redirectURI);
+            string BT_RedirectURI = string.Format("http://{0}:{1}", IPAddress.Loopback, GetRandomUnusedPort());
+            output("redirect URI: " + BT_RedirectURI);
 
             // Creates an HttpListener to listen for requests on that redirect URI.
+            string httpRedirectURI = BT_RedirectURI + "/";
             var http = new HttpListener();
-            http.Prefixes.Add(redirectURI);
+            http.Prefixes.Add(httpRedirectURI);
             output("Listening..");
             http.Start();
 
             // Creates the OAuth 2.0 authorization request.
-            string authorizationRequest = string.Format("{0}?response_type=code&scope=openid%20profile&redirect_uri={1}&client_id={2}&state={3}&code_challenge={4}&code_challenge_method={5}",
+            string authorizationRequest = string.Format("{0}?response_type=code&scope=BIMTrack_Api%20openid&redirect_uri={1}&client_id={2}&state={3}&code_challenge={4}&code_challenge_method={5}",
                 authorizationEndpoint,
-                System.Uri.EscapeDataString(redirectURI),
+                System.Uri.EscapeDataString(BT_RedirectURI),
                 clientID,
                 state,
                 code_challenge,
@@ -115,7 +116,7 @@ namespace BIM_Track_OAuth
             output("Authorization code: " + code);
 
             // Starts the code exchange at the Token Endpoint.
-            performCodeExchange(code, code_verifier, redirectURI);
+            performCodeExchange(code, code_verifier, BT_RedirectURI);
         }
 
         async void performCodeExchange(string code, string code_verifier, string redirectURI)
@@ -123,7 +124,7 @@ namespace BIM_Track_OAuth
             output("Exchanging code for tokens...");
 
             // builds the  request
-            string tokenRequestURI = "https://www.googleapis.com/oauth2/v4/token";
+            string tokenRequestURI = tokenEndpoint;
             string tokenRequestBody = string.Format("code={0}&redirect_uri={1}&client_id={2}&code_verifier={3}&client_secret={4}&scope=&grant_type=authorization_code",
                 code,
                 System.Uri.EscapeDataString(redirectURI),
@@ -157,7 +158,6 @@ namespace BIM_Track_OAuth
                     Dictionary<string, string> tokenEndpointDecoded = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseText);
 
                     string access_token = tokenEndpointDecoded["access_token"];
-                    userinfoCall(access_token);
                 }
             }
             catch (WebException ex)
@@ -180,30 +180,6 @@ namespace BIM_Track_OAuth
             }
         }
 
-
-        async void userinfoCall(string access_token)
-        {
-            output("Making API Call to Userinfo...");
-
-            // builds the  request
-            string userinfoRequestURI = "https://www.googleapis.com/oauth2/v3/userinfo";
-
-            // sends the request
-            HttpWebRequest userinfoRequest = (HttpWebRequest)WebRequest.Create(userinfoRequestURI);
-            userinfoRequest.Method = "GET";
-            userinfoRequest.Headers.Add(string.Format("Authorization: Bearer {0}", access_token));
-            userinfoRequest.ContentType = "application/x-www-form-urlencoded";
-            userinfoRequest.Accept = "Accept=text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
-
-            // gets the response
-            WebResponse userinfoResponse = await userinfoRequest.GetResponseAsync();
-            using (StreamReader userinfoResponseReader = new StreamReader(userinfoResponse.GetResponseStream()))
-            {
-                // reads response body
-                string userinfoResponseText = await userinfoResponseReader.ReadToEndAsync();
-                output(userinfoResponseText);
-            }
-        }
 
         /// <summary>
         /// Appends the given string to the on-screen log, and the debug console.
