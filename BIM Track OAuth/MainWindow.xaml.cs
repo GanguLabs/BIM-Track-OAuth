@@ -158,6 +158,7 @@ namespace BIM_Track_OAuth
                     Dictionary<string, string> tokenEndpointDecoded = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseText);
 
                     string access_token = tokenEndpointDecoded["access_token"];
+                    getHubs_HttpWebRequest("https://api.bimtrackapp.co/v3/hubs", access_token);
                 }
             }
             catch (WebException ex)
@@ -178,6 +179,32 @@ namespace BIM_Track_OAuth
 
                 }
             }
+        }
+
+        async void getHubs_HttpWebRequest(string tokenRequestURI, string accessToken)
+        {
+            HttpWebRequest tokenRequest = (HttpWebRequest)WebRequest.Create(tokenRequestURI);
+            tokenRequest.Method = "GET";
+            tokenRequest.Accept = "Accept=application/json,text/json,application/xml,text/xml";
+            tokenRequest.Headers.Add("Authorization", "Bearer " + accessToken);
+            WebResponse tokenResponse = await tokenRequest.GetResponseAsync();
+            using (StreamReader reader = new StreamReader(tokenResponse.GetResponseStream()))
+            {
+                // reads response body
+                string responseText = await reader.ReadToEndAsync();
+                //output(responseText);
+                byte[] encodedResponseText = Encoding.Convert(Encoding.Default, Encoding.UTF8, Encoding.Default.GetBytes(responseText));
+                string ecode = Encoding.UTF8.GetString(encodedResponseText);
+
+
+                // convert JSON Response to List of Hubs
+                List<BT_Hub> responseDecoded = JsonConvert.DeserializeObject<List<BT_Hub>>(ecode);
+
+                output(responseDecoded[0].Name);
+
+            }
+
+
         }
 
 
